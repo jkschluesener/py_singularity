@@ -1,0 +1,39 @@
+Bootstrap: docker
+
+From: nvidia/cuda:11.7.0-runtime-rockylinux8
+
+%labels
+    Maintainer Jan K. Schluesener
+    Version 1.0
+
+%files
+    packages
+
+%post
+    # Install System Packages
+    dnf install -y epel-release
+    dnf install -y wget
+    dnf install -y which
+    yum -y install https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm
+    yum -y install https://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/s/SDL2-2.0.14-2.el7.x86_64.rpm
+    yum -y install ffmpeg libXext libSM libXrender libXcomposite libXdamage libXrandr pciutils
+    dnf clean all
+
+    # Install Miniconda
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    echo 78f39f9bae971ec1ae7969f0516017f2413f17796670f7040725dd83fcff5689\ Miniconda3-latest-Linux-x86_64.sh > miniconda3_sha256
+    sha256sum -c miniconda3_sha256
+    rm miniconda3_sha256
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
+    rm Miniconda3-latest-Linux-x86_64.sh
+
+    # Install Packages
+    /opt/miniconda3/bin/conda config --append channels conda-forge
+    /opt/miniconda3/bin/conda install -y mamba
+    /opt/miniconda3/bin/mamba install -y --file packages/conda/requirements.txt
+    cd packages/pip
+    /opt/miniconda3/bin/pip install -r requirements.txt
+    rm -rf packages
+    /opt/miniconda3/bin/mamba clean --all -f -y
+    /opt/miniconda3/bin/pip cache purge
+
